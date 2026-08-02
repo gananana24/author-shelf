@@ -6,6 +6,11 @@ import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': new URL('./src/app', import.meta.url).pathname,
+    },
+  },
   plugins: [
     tanstackRouter({
       target: 'react',
