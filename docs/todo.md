@@ -1,8 +1,24 @@
 # Shoka TODO
 
-## Phase 0: 実装前スパイク
+## Phase 0: ローカルモック基盤
 
+- [ ] [実装手順](implementation-plan.md)のStep 1に従い、Vite・React・Honoを起動する
+- [ ] `/api/health`でSPAとWorkerの接続を確認する
+- [ ] 共有ドメイン型とHono RPCのAPI契約を定義する
+- [ ] 楽天API形式へ依存しない`BookCatalog`境界を定義する
+- [ ] 3ページ以上、欠損項目、不完全な刊行日を含むモックデータを作る
+- [ ] 著者候補検索と著者別書籍一覧をモックAPIで返す
+- [ ] TanStack RouterとTanStack Queryを接続する
+- [ ] 検索から詳細ダイアログまでを通常グリッドで完成させる
+- [ ] Tailwind CSS、必要なshadcn/ui、masonryを段階的に追加する
+- [ ] モック利用中であることを画面上に明示する
+- [ ] ローカルのlint、型チェック、テスト、buildを成功させる
+
+## Phase 1: 仮公開と楽天APIスパイク
+
+- [ ] Cloudflareへモック版を仮デプロイし、`workers.dev`のURLを取得する
 - [ ] 楽天Web ServiceのアプリIDとアクセスキーを取得する
+- [ ] `workers.dev`のホスト名を楽天の許可サイトへ登録する
 - [ ] 楽天Books APIの利用規約、書影利用条件、表記要件を確認する
 - [ ] 東野圭吾を含む代表著者3〜5名で実データを保存せずに調査する
 - [ ] 件数、書影取得率、日付精度、判型、内容紹介の欠損率を集計する
@@ -13,7 +29,7 @@
 - [ ] CSS Grid＋ResizeObserverのmasonryをPC・モバイルで試作する
 - [ ] スパイク結果を[未決事項](open-issues.md)へ反映し、実装可否を判断する
 
-## Phase 1: プロジェクト基盤
+## Phase 2: 本番向けプロジェクト基盤
 
 - [ ] pnpm、TypeScript、Vite、Reactのプロジェクトを作成する
 - [ ] TanStack Routerを導入し、`/`と`/authors/$authorName`を定義する
@@ -26,7 +42,7 @@
 - [ ] Worker Bindingsの型生成を設定する
 - [ ] `.dev.vars*`、Wrangler生成物、秘密情報を`.gitignore`へ追加する
 
-## Phase 2: ドメインと外部API
+## Phase 3: ドメインと外部API
 
 - [ ] `BookEdition`と`PublicationDate`を定義する
 - [ ] 検索語とISBNの正規化を実装する
@@ -38,7 +54,7 @@
 - [ ] Workers KVのキー、スキーマバージョン、TTLを実装する
 - [ ] cursorベースの約30件ページングを実装する
 
-## Phase 3: Hono API
+## Phase 4: Hono API
 
 - [ ] 著者候補検索APIを実装する
 - [ ] 著者別書籍一覧APIを実装する
@@ -47,7 +63,7 @@
 - [ ] APIキーとアクセスキーをWorker Secretsへ登録する
 - [ ] 外部レスポンス本文と秘密情報がエラーへ漏れないことを確認する
 
-## Phase 4: UI
+## Phase 5: UI
 
 - [ ] Shokaのライトテーマと基本レイアウトを作る
 - [ ] トップ画面の説明文と著者検索を作る
@@ -63,7 +79,7 @@
 - [ ] スケルトン、空状態、失敗表示、再試行を実装する
 - [ ] 「情報について」にデータ源と完全性の説明を追加する
 
-## Phase 5: アクセシビリティと性能
+## Phase 6: アクセシビリティと性能
 
 - [ ] カードへ書名のアクセシブル名を付ける
 - [ ] 全操作のキーボード導線を確認する
@@ -76,7 +92,7 @@
 - [ ] 代表著者でキャッシュ済み2秒、初回5秒の目標を測る
 - [ ] Chrome、Safari、Firefox、Edge、iOS Safari、Android Chromeで確認する
 
-## Phase 6: テスト
+## Phase 7: テスト
 
 - [ ] 日付、ソート、シャッフル、フィルター、正規化の単体テストを書く
 - [ ] 楽天API fixtureを作成する
@@ -86,7 +102,7 @@
 - [ ] キーボード操作と自動アクセシビリティ検査を追加する
 - [ ] 実楽天APIを呼ぶ手動疎通コマンドを用意する
 
-## Phase 7: CIと公開
+## Phase 8: CIと公開
 
 - [ ] `pnpm check`へlint、型チェック、全テスト、E2E、buildをまとめる
 - [ ] `pnpm deploy`を`pnpm check`成功後の`wrangler deploy`として定義する
