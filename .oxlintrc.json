@@ -1,7 +1,103 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["react", "typescript", "oxc"],
+  "ignorePatterns": ["src/app/routeTree.gen.ts"],
   "rules": {
     "react/rules-of-hooks": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/app/**/*.ts", "src/app/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/api", "**/api/**"],
+                "message": "Do not import API implementation from the app. Use HTTP or the Hono RPC client."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/api/**/*.ts", "src/api/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/app", "**/app/**"],
+                "message": "Do not import app code from the API."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/**/*.ts", "src/shared/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "react",
+                "message": "Keep shared code platform-agnostic and limited to types and pure functions."
+              },
+              {
+                "name": "react-dom",
+                "message": "Keep shared code platform-agnostic and limited to types and pure functions."
+              },
+              {
+                "name": "hono",
+                "message": "Keep shared code platform-agnostic and limited to types and pure functions."
+              },
+              {
+                "name": "vite",
+                "message": "Keep shared code platform-agnostic and limited to types and pure functions."
+              }
+            ],
+            "patterns": [
+              {
+                "group": [
+                  "react/*",
+                  "react-dom/*",
+                  "hono/*",
+                  "vite/*",
+                  "@tanstack/*",
+                  "@cloudflare/*",
+                  "cloudflare:*",
+                  "**/app",
+                  "**/app/**",
+                  "**/api",
+                  "**/api/**"
+                ],
+                "message": "Keep shared code platform-agnostic and limited to types and pure functions."
+              }
+            ]
+          }
+        ],
+        "no-restricted-globals": [
+          "error",
+          {
+            "name": "window",
+            "message": "Do not use browser APIs in shared code."
+          },
+          {
+            "name": "document",
+            "message": "Do not use browser APIs in shared code."
+          },
+          {
+            "name": "navigator",
+            "message": "Do not use browser APIs in shared code."
+          }
+        ]
+      }
+    }
+  ]
 }

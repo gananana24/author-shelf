@@ -14,22 +14,185 @@
 
 ## 2. Step 1: 最小構成を起動する
 
-### 作業
+既存のVite、React、TanStack Router、Tailwind CSSはそのまま使い、同じVite開発サーバーへCloudflare Worker上のHono APIを追加する。HonoでHTMLを生成するSSR構成には変更しない。
 
-- `pnpm init`でpackageを作る
-- Vite、React、TypeScriptを導入する
-- Cloudflare Vite pluginとWranglerを導入する
-- `worker/index.ts`へHonoを配置する
-- Wranglerの静的アセット設定をSPAフォールバックにする
-- `/api/health`を追加する
-- `.wrangler`、`.dev.vars*`、生成型、ビルド成果物をGit対象外にする
+この段階ではCloudflareへのログインやデプロイを行わない。Cloudflare Vite Pluginは、本番に近いWorkers環境をローカルで動かすために使用する。
 
-この段階ではTanStack Router、TanStack Query、Tailwind CSS、shadcn/uiをまだ使わなくてもよい。Cloudflare WorkerとReact SPAが同じ開発サーバーで動くことを先に確認する。
+### 2.1 依存関係を追加する
+
+```sh
+pnpm add hono
+pnpm add -D @cloudflare/vite-plugin wrangler @cloudflare/workers-types
+```
+
+すでに追加済みのパッケージは再インストールしなくてよい。`hono`はアプリの実行に必要なので`dependencies`、それ以外は開発・ビルド用なので`devDependencies`へ置く。
+
+`pnpm create hono`は実行しない。既存のReact SPAをHonoのSSRテンプレートで置き換えないためである。
+
+### 2.2 `src`内で画面とAPIを分離する
+
+アプリのコードは`src/`へまとめ、その中でReact SPA、Hono API、共有コードの責務を分ける。
+
+```text
+src/
+├── app/                 # React SPA
+│   ├── main.tsx
+│   ├── index.css
+│   ├── routeTree.gen.ts
+│   └── routes/
+├── api/
+│   └── index.ts         # Hono API
+└── shared/              # 画面とAPIで共有するドメイン型
+```
+
+`api`はコードの責務を表す名前とし、Cloudflare固有の`worker`という名前はディレクトリに使わない。実行環境を変更してもAPIコードの置き場所を維持できる。TypeScript設定の`include`を分け、React用設定がAPIコードまで対象にしないようにする。
+
+### 2.3 Worker用のTypeScript設定を作る
+
+ルートへ`tsconfig.worker.json`を作る。
+
+```jsonc
+{
+  "extends": "./tsconfig.node.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.worker.tsbuildinfo",
+    "types": ["@cloudflare/workers-types", "vite/client"],
+    "strict": true,
+  },
+  "include": ["src/api", "src/shared"],
+}
+```
+
+`tsconfig.app.json`の`include`は`["src/app", "src/shared"]`とする。
+
+続いて`tsconfig.json`の参照へWorkerを追加する。
+
+```json
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.worker.json" }
+  ]
+}
+```
+
+### 2.4 Wranglerをローカル用に設定する
+
+ルートへ`wrangler.jsonc`を作る。
+
+```jsonc
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "shoka",
+  "compatibility_date": "2026-08-01",
+  "main": "./src/api/index.ts",
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"],
+  },
+}
+```
+
+- `/api/*`は静的アセットより先にWorkerで処理する
+- それ以外の未知のパスは`index.html`へフォールバックし、TanStack Routerへ渡す
+- Vite Plugin使用時は`assets.directory`を手動指定しない
+
+### 2.5 Honoのヘルスチェックを作る
+
+`src/api/index.ts`を次の内容にする。
+
+```ts
+import { Hono } from 'hono'
+
+const app = new Hono()
+
+app.get('/api/health', (c) => {
+  return c.json({ status: 'ok' })
+})
+
+export default app
+```
+
+フロントエンドとAPIは同一オリジンで動くため、ここではCORSを追加しない。
+
+### 2.6 Cloudflare Vite Pluginを追加する
+
+`vite.config.ts`を次の構成にする。TanStack Router PluginはReact Pluginより前、Cloudflare PluginはReact Pluginより後ろへ置く。
+
+```ts
+import { cloudflare } from '@cloudflare/vite-plugin'
+import tailwindcss from '@tailwindcss/vite'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  plugins: [
+    tanstackRouter({
+      target: 'react',
+      autoCodeSplitting: true,
+      routesDirectory: './src/app/routes',
+      generatedRouteTree: './src/app/routeTree.gen.ts',
+    }),
+    tailwindcss(),
+    react(),
+    cloudflare(),
+  ],
+})
+```
+
+### 2.7 ローカル生成物をGit対象外にする
+
+`.gitignore`へ次を追加する。
+
+```gitignore
+.wrangler
+.dev.vars*
+```
+
+`.dev.vars`には将来ローカル用の秘密情報を置く。値やファイル本体はコミットしない。
+
+### 2.8 ローカルで確認する
+
+開発サーバーを起動する。
+
+```sh
+pnpm dev
+```
+
+別のターミナルからAPIを確認する。
+
+```sh
+curl -i http://localhost:5173/api/health
+```
+
+本文が次なら接続成功である。
+
+```json
+{ "status": "ok" }
+```
+
+ブラウザでは次も確認する。
+
+- `/`がReactで表示される
+- `/about`を直接開いてもReactで表示される
+- `/api/health`はHTMLではなくJSONを返す
+
+最後に本番用ビルドまで確認する。
+
+```sh
+pnpm build
+```
+
+この時点では`wrangler login`、`wrangler deploy`、KV、楽天APIの環境変数を設定しない。
 
 ### 完了条件
 
 - `pnpm dev`でトップ画面が開く
-- ブラウザから`GET /api/health`を呼べる
+- `GET /api/health`が`200`と`{"status":"ok"}`を返す
+- `/about`の直接表示がSPAフォールバックで成功する
 - `pnpm build`が成功する
 - React側へWorker専用コードが混入していない
 
@@ -37,7 +200,7 @@
 
 ### 作業
 
-- `shared/book.ts`へ`BookEdition`と`PublicationDate`を定義する
+- `src/shared/book.ts`へ`BookEdition`と`PublicationDate`を定義する
 - Hono RPCで次のAPI契約を作る
 
 ```http
@@ -45,8 +208,8 @@ GET /api/authors?q={query}
 GET /api/authors/:authorName/books?view={random|year}&cursor={cursor}&seed={seed}
 ```
 
-- `worker/services/book-catalog.ts`をデータ取得のインターフェースにする
-- `worker/services/mock-book-catalog.ts`へモック実装を置く
+- `src/api/services/book-catalog.ts`をデータ取得のインターフェースにする
+- `src/api/services/mock-book-catalog.ts`へモック実装を置く
 - Honoのルートからはインターフェースだけを参照する
 - 空文字、過長入力、不正な`view`と`cursor`を400にする
 

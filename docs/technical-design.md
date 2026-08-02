@@ -54,30 +54,30 @@ Cloudflare Worker
 ```text
 .
 ├── src/
-│   ├── routes/                 # TanStack Router routes
-│   ├── components/
-│   │   ├── ui/                 # 選択導入したshadcn/ui
-│   │   ├── book-card.tsx
-│   │   ├── book-dialog.tsx
-│   │   └── masonry-grid.tsx
-│   ├── features/
-│   │   ├── author-search/
-│   │   └── book-gallery/
-│   ├── lib/
-│   │   ├── api-client.ts       # Hono RPC client
-│   │   ├── publication-date.ts
-│   │   └── seeded-shuffle.ts
-│   └── styles/
-├── worker/
-│   ├── app.ts                  # Hono appとAppType export
-│   ├── routes/
-│   ├── services/
-│   │   ├── rakuten-books.ts
-│   │   └── book-catalog.ts
-│   ├── cache/
-│   └── schemas/
-├── shared/
-│   └── book.ts                 # 正規化済みドメイン型
+│   ├── app/
+│   │   ├── routes/                 # TanStack Router routes
+│   │   ├── components/
+│   │   │   ├── ui/                 # 選択導入したshadcn/ui
+│   │   │   ├── book-card.tsx
+│   │   │   ├── book-dialog.tsx
+│   │   │   └── masonry-grid.tsx
+│   │   ├── features/
+│   │   │   ├── author-search/
+│   │   │   └── book-gallery/
+│   │   └── lib/
+│   │       ├── api-client.ts       # Hono RPC client
+│   │       ├── publication-date.ts
+│   │       └── seeded-shuffle.ts
+│   ├── api/
+│   │   ├── index.ts                # Hono appとAppType export
+│   │   ├── routes/
+│   │   ├── services/
+│   │   │   ├── rakuten-books.ts
+│   │   │   └── book-catalog.ts
+│   │   ├── cache/
+│   │   └── schemas/
+│   └── shared/
+│       └── book.ts                 # 正規化済みドメイン型
 ├── tests/
 │   ├── fixtures/
 │   └── e2e/

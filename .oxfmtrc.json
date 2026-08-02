@@ -10,5 +10,5 @@
   "arrowParens": "always",
   "sortImports": true,
   "sortPackageJson": true,
-  "ignorePatterns": ["src/routeTree.gen.ts"]
+  "ignorePatterns": ["src/app/routeTree.gen.ts"]
 }
