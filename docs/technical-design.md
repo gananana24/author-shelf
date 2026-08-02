@@ -11,21 +11,21 @@
 
 ## 2. 採用技術
 
-| 領域 | 技術 | 用途 |
-| --- | --- | --- |
-| 言語 | TypeScript | クライアント、Worker、共有型 |
-| ビルド | Vite | SPAとWorkerの開発・ビルド |
-| UI | React | 画面実装 |
-| ルーティング | TanStack Router | 型安全な画面URLと検索パラメータ |
-| データ取得 | TanStack Query | debounce検索、短期キャッシュ、無限スクロール |
-| API | Hono | Worker上のAPIルーティングとエラー変換 |
-| APIクライアント | Hono RPC | 入出力型の共有 |
-| スタイル | Tailwind CSS | レスポンシブUI、配色、余白 |
-| UI部品 | shadcn/ui | Dialog、Input、Button、Skeletonなど必要部分のみ |
-| 実行環境 | Cloudflare Workers | Hono APIと静的アセット配信 |
-| サーバーキャッシュ | Workers KV | 24時間の検索・書誌キャッシュ |
-| 外部データ | 楽天Books Book Search API | 紙書籍の検索と書誌・書影取得 |
-| パッケージ管理 | pnpm | 依存関係とスクリプト管理 |
+| 領域               | 技術                      | 用途                                            |
+| ------------------ | ------------------------- | ----------------------------------------------- |
+| 言語               | TypeScript                | クライアント、Worker、共有型                    |
+| ビルド             | Vite                      | SPAとWorkerの開発・ビルド                       |
+| UI                 | React                     | 画面実装                                        |
+| ルーティング       | TanStack Router           | 型安全な画面URLと検索パラメータ                 |
+| データ取得         | TanStack Query            | debounce検索、短期キャッシュ、無限スクロール    |
+| API                | Hono                      | Worker上のAPIルーティングとエラー変換           |
+| APIクライアント    | Hono RPC                  | 入出力型の共有                                  |
+| スタイル           | Tailwind CSS              | レスポンシブUI、配色、余白                      |
+| UI部品             | shadcn/ui                 | Dialog、Input、Button、Skeletonなど必要部分のみ |
+| 実行環境           | Cloudflare Workers        | Hono APIと静的アセット配信                      |
+| サーバーキャッシュ | Workers KV                | 24時間の検索・書誌キャッシュ                    |
+| 外部データ         | 楽天Books Book Search API | 紙書籍の検索と書誌・書影取得                    |
+| パッケージ管理     | pnpm                      | 依存関係とスクリプト管理                        |
 
 Next.jsは採用しない。将来SEOまたはSSRが必須になった場合に、Next.jsまたはTanStack Startを再評価する。
 
@@ -91,10 +91,10 @@ Cloudflare Worker
 
 ## 5. 画面ルート
 
-| ルート | 内容 |
-| --- | --- |
-| `/` | サービス説明、著者検索、著者候補 |
-| `/authors/$authorName` | 著者の書籍一覧 |
+| ルート                 | 内容                             |
+| ---------------------- | -------------------------------- |
+| `/`                    | サービス説明、著者検索、著者候補 |
+| `/authors/$authorName` | 著者の書籍一覧                   |
 
 著者ページはアプリ内遷移と再読み込みに必要な固定URLを持つが、SEO最適化はしない。
 
@@ -151,13 +151,7 @@ type BookPageResponse = {
 
 ```ts
 type PublicationPrecision =
-  | 'day'
-  | 'early-month'
-  | 'mid-month'
-  | 'late-month'
-  | 'month'
-  | 'year'
-  | 'unknown'
+  'day' | 'early-month' | 'mid-month' | 'late-month' | 'month' | 'year' | 'unknown'
 
 type PublicationDate = {
   raw: string | null
@@ -254,13 +248,13 @@ type BookEdition = {
 
 Workerは外部APIエラーをアプリ固有のエラーへ変換する。
 
-| 状況 | HTTP | クライアント表示 |
-| --- | --- | --- |
-| 不正入力 | 400 | 入力を確認する案内 |
-| 該当なし | 200 | 候補または本が見つからない空状態 |
-| 外部API制限・障害 | 502または503 | 取得失敗と再試行ボタン |
-| KV障害 | 可能なら外部APIへフォールバック | 失敗時のみ再試行案内 |
-| 想定外 | 500 | 一般的な失敗案内 |
+| 状況              | HTTP                            | クライアント表示                 |
+| ----------------- | ------------------------------- | -------------------------------- |
+| 不正入力          | 400                             | 入力を確認する案内               |
+| 該当なし          | 200                             | 候補または本が見つからない空状態 |
+| 外部API制限・障害 | 502または503                    | 取得失敗と再試行ボタン           |
+| KV障害            | 可能なら外部APIへフォールバック | 失敗時のみ再試行案内             |
+| 想定外            | 500                             | 一般的な失敗案内                 |
 
 技術詳細、秘密情報、外部APIレスポンス本文をクライアントへ露出しない。
 
