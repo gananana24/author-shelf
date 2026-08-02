@@ -15,7 +15,8 @@
             "patterns": [
               {
                 "group": ["**/api", "**/api/**"],
-                "message": "Do not import API implementation from the app. Use HTTP or the Hono RPC client."
+                "message": "Do not import API implementation from the app. Use HTTP or the Hono RPC client.",
+                "allowTypeImports": true
               }
             ]
           }
