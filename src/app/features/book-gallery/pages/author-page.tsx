@@ -75,7 +75,18 @@ const AuthorPage = () => {
         </div>
       ) : (
         <>
-          <BookGrid books={books} isLoading={isLoading} isLoadingMore={isLoadingMore} view={view} />
+          {books.length === 0 && !isLoading ? (
+            <p className="py-16 text-center text-sm text-muted-foreground" role="status">
+              この著者の本は見つかりませんでした。
+            </p>
+          ) : (
+            <BookGrid
+              books={books}
+              isLoading={isLoading}
+              isLoadingMore={isLoadingMore}
+              view={view}
+            />
+          )}
           {nextCursor && <div aria-hidden="true" className="h-8" ref={setLoadMoreTarget} />}
         </>
       )}

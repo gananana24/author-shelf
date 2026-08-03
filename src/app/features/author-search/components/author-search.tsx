@@ -17,6 +17,7 @@ const AuthorSearch = () => {
     authors,
     clearAuthors,
     error,
+    hasSearched,
     isSearching,
     query,
     searchAuthors,
@@ -140,6 +141,11 @@ const AuthorSearch = () => {
                   </Button>
                 ))}
               </div>
+            )}
+            {hasSearched && !isSearching && !error && authors.length === 0 && query.trim() && (
+              <p className="absolute top-full left-0 z-20 mt-1 w-full rounded-xl bg-background p-4 text-sm text-muted-foreground shadow-lg ring ring-black/5">
+                著者が見つかりませんでした。
+              </p>
             )}
           </Field>
 

@@ -36,6 +36,34 @@ type RakutenResponse = {
 
 const endpoint = 'https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404'
 const requestTimeoutMs = 10_000
+const requestIntervalMs = 1_000
+const rateLimitRetryDelayMs = 1_500
+
+let requestQueue = Promise.resolve()
+let lastRequestAt = 0
+
+const enqueueRequest = async (request: () => Promise<Response>) => {
+  const previousRequest = requestQueue
+  let releaseRequest!: () => void
+  requestQueue = new Promise((resolve) => {
+    releaseRequest = resolve
+  })
+
+  await previousRequest
+
+  try {
+    const elapsed = Date.now() - lastRequestAt
+    const remainingInterval = Math.max(0, requestIntervalMs - elapsed)
+    if (remainingInterval > 0) {
+      await new Promise((resolve) => setTimeout(resolve, remainingInterval))
+    }
+
+    lastRequestAt = Date.now()
+    return await request()
+  } finally {
+    releaseRequest()
+  }
+}
 
 const normalizeAuthorName = (value: string) => value.normalize('NFKC').trim().replace(/\s+/g, ' ')
 const authorNameKey = (value: string) => normalizeAuthorName(value).replace(/\s/g, '')
@@ -112,15 +140,25 @@ class RakutenBookCatalog implements BookCatalog {
     params.set('hits', '30')
     params.set('booksGenreId', '001')
 
-    const response = await fetch(`${endpoint}?${params.toString()}`, {
-      headers: {
-        accessKey: this.bindings.RAKUTEN_ACCESS_KEY,
-        Referer: this.bindings.RAKUTEN_APPLICATION_URL,
-        Origin: this.bindings.RAKUTEN_APPLICATION_URL,
-        'User-Agent': 'Shoka/0.1 (book catalogue)',
-      },
-      signal: AbortSignal.timeout(requestTimeoutMs),
-    })
+    const request = () =>
+      enqueueRequest(() =>
+        fetch(`${endpoint}?${params.toString()}`, {
+          headers: {
+            accessKey: this.bindings.RAKUTEN_ACCESS_KEY,
+            Referer: this.bindings.RAKUTEN_APPLICATION_URL,
+            Origin: this.bindings.RAKUTEN_APPLICATION_URL,
+            'User-Agent': 'Shoka/0.1 (book catalogue)',
+          },
+          signal: AbortSignal.timeout(requestTimeoutMs),
+        }),
+      )
+    let response = await request()
+
+    if (response.status === 429) {
+      await new Promise((resolve) => setTimeout(resolve, rateLimitRetryDelayMs))
+      response = await request()
+    }
+
     const result = (await response.json()) as RakutenResponse
 
     if (!response.ok || result.error) {

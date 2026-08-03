@@ -10,6 +10,7 @@ export function useAuthorSearch() {
   const [authors, setAuthors] = useState<string[]>([])
   const [error, setError] = useState('')
   const [isSearching, setIsSearching] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
   const requestRef = useRef<AbortController | null>(null)
 
   const searchAuthors = async (searchQuery: string) => {
@@ -18,6 +19,7 @@ export function useAuthorSearch() {
     requestRef.current = controller
     setError('')
     setAuthors([])
+    setHasSearched(true)
     setIsSearching(true)
 
     try {
@@ -46,6 +48,7 @@ export function useAuthorSearch() {
 
   const selectAuthor = (authorName: string) => {
     setAuthors([])
+    setHasSearched(false)
     void navigate({
       to: '/authors/$authorName',
       params: { authorName },
@@ -53,16 +56,25 @@ export function useAuthorSearch() {
     })
   }
 
-  const clearAuthors = () => setAuthors([])
+  const clearAuthors = () => {
+    setAuthors([])
+    setHasSearched(false)
+  }
+
+  const updateQuery = (value: string) => {
+    setQuery(value)
+    setHasSearched(false)
+  }
 
   return {
     authors,
     clearAuthors,
     error,
+    hasSearched,
     isSearching,
     query,
     searchAuthors,
     selectAuthor,
-    setQuery,
+    setQuery: updateQuery,
   }
 }
