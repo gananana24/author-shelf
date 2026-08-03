@@ -14,6 +14,7 @@ import type { BookEdition, BookView } from '../../../../shared/book'
 type BookGridProps = {
   books: BookEdition[]
   isLoading: boolean
+  isLoadingMore?: boolean
   view: BookView
 }
 
@@ -27,7 +28,7 @@ const placeholderStyles = [
 ]
 
 /** 書影の有無に応じて刊行物を等幅グリッドへ配置する。 */
-const BookGrid = ({ books, isLoading, view }: BookGridProps) => {
+const BookGrid = ({ books, isLoading, isLoadingMore = false, view }: BookGridProps) => {
   const [selectedBook, setSelectedBook] = useState<BookEdition | null>(null)
 
   if (isLoading) {
@@ -96,6 +97,18 @@ const BookGrid = ({ books, isLoading, view }: BookGridProps) => {
           </div>
         </section>
       ))}
+
+      {isLoadingMore && (
+        <div
+          aria-label="追加の本を読み込み中"
+          className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+          role="status"
+        >
+          {Array.from({ length: 6 }, (_, index) => (
+            <Skeleton className="aspect-2/3 w-full rounded-md" key={index} />
+          ))}
+        </div>
+      )}
 
       <Dialog
         onOpenChange={(open) => {

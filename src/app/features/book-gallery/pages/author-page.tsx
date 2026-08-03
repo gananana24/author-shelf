@@ -1,4 +1,5 @@
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
+import { useRef } from 'react'
 
 import { Button } from '@/components/ui/button'
 
@@ -10,7 +11,21 @@ const AuthorPage = () => {
   const { authorName } = useParams({ from: '/authors/$authorName' })
   const { view } = useSearch({ from: '/authors/$authorName' })
   const navigate = useNavigate()
-  const { books, error, isLoading, loadBooks, total } = useAuthorBooks(authorName, view)
+  const { books, error, isLoading, isLoadingMore, loadBooks, loadMore, nextCursor, total } =
+    useAuthorBooks(authorName, view)
+  const observerRef = useRef<IntersectionObserver | null>(null)
+
+  const setLoadMoreTarget = (node: HTMLDivElement | null) => {
+    observerRef.current?.disconnect()
+    observerRef.current = null
+
+    if (!node || !nextCursor) return
+
+    observerRef.current = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) void loadMore()
+    })
+    observerRef.current.observe(node)
+  }
 
   const changeView = (nextView: 'random' | 'year') => {
     if (nextView === view) return
@@ -59,7 +74,10 @@ const AuthorPage = () => {
           </Button>
         </div>
       ) : (
-        <BookGrid books={books} isLoading={isLoading} view={view} />
+        <>
+          <BookGrid books={books} isLoading={isLoading} isLoadingMore={isLoadingMore} view={view} />
+          {nextCursor && <div aria-hidden="true" className="h-8" ref={setLoadMoreTarget} />}
+        </>
       )}
     </main>
   )

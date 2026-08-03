@@ -37,11 +37,14 @@ type RakutenResponse = {
 const endpoint = 'https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404'
 const requestTimeoutMs = 10_000
 
+const normalizeAuthorName = (value: string) => value.normalize('NFKC').trim().replace(/\s+/g, ' ')
+const authorNameKey = (value: string) => normalizeAuthorName(value).replace(/\s/g, '')
+
 const splitAuthors = (author: string | undefined) => {
   if (!author) return []
   return author
     .split(/[・／/,]/)
-    .map((name) => name.trim())
+    .map(normalizeAuthorName)
     .filter(Boolean)
 }
 
@@ -131,8 +134,11 @@ class RakutenBookCatalog implements BookCatalog {
 
   async searchAuthors(query: string): Promise<AuthorCandidate[]> {
     const result = await this.search(new URLSearchParams({ author: query, page: '1' }))
-    const names = new Set(getItems(result).flatMap((item) => splitAuthors(item.author)))
-    return [...names].map((name) => ({ name }))
+    const names = new Map<string, string>()
+    for (const name of getItems(result).flatMap((item) => splitAuthors(item.author))) {
+      names.set(authorNameKey(name), name)
+    }
+    return [...names.values()].map((name) => ({ name }))
   }
 
   async listBooks(input: ListBooksInput): Promise<BookPage> {

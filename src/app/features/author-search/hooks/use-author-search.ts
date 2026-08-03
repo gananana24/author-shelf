@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { apiClient } from '@/lib/api-client'
 
@@ -10,14 +10,21 @@ export function useAuthorSearch() {
   const [authors, setAuthors] = useState<string[]>([])
   const [error, setError] = useState('')
   const [isSearching, setIsSearching] = useState(false)
+  const requestRef = useRef<AbortController | null>(null)
 
   const searchAuthors = async (searchQuery: string) => {
+    requestRef.current?.abort()
+    const controller = new AbortController()
+    requestRef.current = controller
     setError('')
     setAuthors([])
     setIsSearching(true)
 
     try {
-      const response = await apiClient.api.authors.$get({ query: { q: searchQuery } })
+      const response = await apiClient.api.authors.$get(
+        { query: { q: searchQuery } },
+        { init: { signal: controller.signal } },
+      )
       const result = await response.json()
 
       if ('error' in result) {
@@ -26,10 +33,14 @@ export function useAuthorSearch() {
       }
 
       setAuthors(result.authors.map(({ name }) => name))
-    } catch {
+    } catch (searchError) {
+      if (searchError instanceof DOMException && searchError.name === 'AbortError') return
       setError('検索に失敗しました。時間をおいてもう一度お試しください。')
     } finally {
-      setIsSearching(false)
+      if (requestRef.current === controller) {
+        requestRef.current = null
+        setIsSearching(false)
+      }
     }
   }
 
