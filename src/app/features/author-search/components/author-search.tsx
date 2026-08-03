@@ -77,11 +77,12 @@ const AuthorSearch = () => {
             <FieldLabel className="sr-only" htmlFor="author-query">
               著者名
             </FieldLabel>
-            <div className="flex items-center rounded-full bg-background/80 px-2 ring-1 ring-foreground-600/45 backdrop-blur-sm transition-shadow focus-within:ring-emerald-600/45 focus-within:ring-offset-2 focus-within:ring-offset-background">
+            <div className="flex items-center rounded-full bg-background/80 px-2 ring ring-foreground/25 backdrop-blur-sm transition-colors focus-within:ring-emerald-600/65">
               <Search aria-hidden="true" className="ml-2 size-4 text-muted-foreground" />
               <Input
                 aria-invalid={Boolean(error)}
                 aria-controls="author-search-results"
+                aria-describedby={error ? 'author-search-error' : undefined}
                 aria-expanded={authors.length > 0}
                 aria-haspopup="listbox"
                 aria-autocomplete="list"
@@ -116,32 +117,28 @@ const AuthorSearch = () => {
                 )}
               </Button>
             </div>
-            {error && <FieldError>{error}</FieldError>}
+            {error && <FieldError id="author-search-error">{error}</FieldError>}
             {authors.length > 0 && (
               <div
-                className="absolute top-full left-0 z-20 mt-2 w-full rounded-xl bg-background p-2 shadow-lg ring-1 ring-black/5"
+                className="absolute top-full left-0 z-20 mt-1 w-full rounded-xl bg-background p-1.5 shadow-lg ring ring-black/5"
                 id="author-search-results"
                 role="listbox"
               >
-                <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground">著者候補</p>
-                <ul>
-                  {authors.map((author, index) => (
-                    <li key={author}>
-                      <Button
-                        aria-selected={index === activeAuthorIndex}
-                        className={`h-auto w-full justify-start px-2 py-2.5 text-left ${index === activeAuthorIndex ? 'bg-muted text-foreground' : ''}`}
-                        id={`author-result-${index}`}
-                        onClick={() => selectAuthor(author)}
-                        onMouseEnter={() => setActiveAuthorIndex(index)}
-                        role="option"
-                        type="button"
-                        variant="ghost"
-                      >
-                        {author}
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
+                {authors.map((author, index) => (
+                  <Button
+                    aria-selected={index === activeAuthorIndex}
+                    className={`h-auto w-full justify-start px-2 py-2.5 text-left ${index === activeAuthorIndex ? 'bg-muted text-foreground' : ''}`}
+                    id={`author-result-${index}`}
+                    key={author}
+                    onClick={() => selectAuthor(author)}
+                    onMouseEnter={() => setActiveAuthorIndex(index)}
+                    role="option"
+                    type="button"
+                    variant="ghost"
+                  >
+                    {author}
+                  </Button>
+                ))}
               </div>
             )}
           </Field>
