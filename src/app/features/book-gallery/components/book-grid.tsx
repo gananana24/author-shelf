@@ -1,3 +1,4 @@
+import { ExternalLink } from 'lucide-react'
 import { useState } from 'react'
 
 import {
@@ -116,19 +117,40 @@ const BookGrid = ({ books, isLoading, isLoadingMore = false, view }: BookGridPro
         }}
         open={selectedBook !== null}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className="bg-background p-5 sm:max-w-4xl sm:p-8">
           {selectedBook && (
-            <>
-              <DialogHeader className="pr-8">
-                <DialogTitle>{selectedBook.title}</DialogTitle>
-                <DialogDescription>{selectedBook.authors.join('・')}</DialogDescription>
-              </DialogHeader>
-
-              <div className="grid gap-4 text-sm">
-                {selectedBook.description && (
-                  <p className="leading-6 text-muted-foreground">{selectedBook.description}</p>
+            <div className="grid gap-6 sm:grid-cols-[18rem_minmax(0,1fr)] sm:gap-10">
+              <div className="flex justify-center">
+                {selectedBook.coverUrl ? (
+                  <img
+                    alt={`${selectedBook.title}の書影`}
+                    className="aspect-2/3 w-full max-w-72 rounded-md bg-muted/30 object-contain"
+                    src={selectedBook.coverUrl}
+                  />
+                ) : (
+                  <div className="flex aspect-2/3 w-full max-w-72 items-center justify-center rounded-md bg-muted p-4 text-center text-sm font-semibold text-muted-foreground">
+                    {selectedBook.title}
+                  </div>
                 )}
-                <dl className="grid grid-cols-[auto_1fr] gap-x-5 gap-y-2">
+              </div>
+
+              <div className="min-w-0 space-y-4">
+                <DialogHeader className="gap-1 pr-8">
+                  <DialogTitle className="text-lg leading-tight sm:text-xl">
+                    {selectedBook.title}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {selectedBook.authors.join('・') || '著者不明'}
+                  </DialogDescription>
+                </DialogHeader>
+
+                {selectedBook.description && (
+                  <p className="line-clamp-8 text-sm leading-6 text-muted-foreground">
+                    {selectedBook.description}
+                  </p>
+                )}
+
+                <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-3 text-sm">
                   <dt className="text-muted-foreground">刊行日</dt>
                   <dd>{selectedBook.publicationDate.raw ?? '不明'}</dd>
                   {selectedBook.publisher && (
@@ -146,22 +168,24 @@ const BookGrid = ({ books, isLoading, isLoadingMore = false, view }: BookGridPro
                   {selectedBook.isbn && (
                     <>
                       <dt className="text-muted-foreground">ISBN</dt>
-                      <dd>{selectedBook.isbn}</dd>
+                      <dd className="font-mono text-xs">{selectedBook.isbn}</dd>
                     </>
                   )}
                 </dl>
+
                 {selectedBook.sourceUrl && (
                   <a
-                    className="text-sm text-emerald-700 underline-offset-4 hover:underline"
+                    className="inline-flex items-center gap-1.5 text-sm text-emerald-700 underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-emerald-600/40 focus-visible:outline-none"
                     href={selectedBook.sourceUrl}
                     rel="noreferrer"
                     target="_blank"
                   >
-                    書誌情報の出典を開く
+                    楽天で書誌情報を見る
+                    <ExternalLink aria-hidden="true" className="size-3.5" />
                   </a>
                 )}
               </div>
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>
