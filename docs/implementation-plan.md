@@ -12,6 +12,10 @@
 
 実装はAPIだけ、または画面だけをまとめて進めず、機能ごとにAPIから最小UIまでを接続する。各段階でブラウザから挙動を確認できる状態を保つ。
 
+`src/app/routes`にはルート定義と画面コンポーネントの参照だけを置く。状態管理、データ取得、イベント処理、画面描画は`features`または`components`へ分離する。著者画面は`/authors/$authorName`の固有パスを持たせ、検索欄は共通シェルに表示する。
+
+自作のReactコンポーネントはファイル内で`const ComponentName = ...`として定義し、末尾で`export default ComponentName`する。hooksはnamed export、shadcn生成の`components/ui`は生成元のexport形式を維持する。
+
 画面からモックデータを直接importしない。フロントエンドは最初から`/api/*`だけを呼び、Hono側のデータ提供実装を交換可能にする。
 
 ## 2. Step 1: 最小構成を起動する
@@ -224,6 +228,8 @@ GET /api/authors/:authorName/books?view={random|year}&cursor={cursor}&seed={seed
 - 書影なし、紹介文なし、ISBNなしの本
 - 年月日、上旬・中旬・下旬、年月のみ、年のみ、刊行年不明
 - 同じseedなら同じ順序、異なるseedなら異なる順序
+
+画面密度を早い段階で確認できるよう、最初の著者別一覧から30件のモック本を表示する。その後、ページング確認時に60冊以上へ拡張する。
 
 書影は外部サイトへ依存せず、ローカルのSVGかモック画像を使う。実在書籍と誤解されないタイトルにし、画面には「モックデータ」と表示する。
 

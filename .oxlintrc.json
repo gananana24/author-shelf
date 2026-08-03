@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
+  "plugins": ["import", "react", "typescript", "oxc"],
   "ignorePatterns": ["src/app/routeTree.gen.ts"],
   "rules": {
     "react/rules-of-hooks": "error"
@@ -19,6 +19,23 @@
                 "allowTypeImports": true
               }
             ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/app/components/*.tsx",
+        "src/app/features/**/components/**/*.tsx",
+        "src/app/features/**/pages/**/*.tsx"
+      ],
+      "rules": {
+        "import/prefer-default-export": "error",
+        "react/function-component-definition": [
+          "error",
+          {
+            "namedComponents": "arrow-function",
+            "unnamedComponents": "function-expression"
           }
         ]
       }
