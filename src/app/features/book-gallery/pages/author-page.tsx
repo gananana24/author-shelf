@@ -59,7 +59,7 @@ const AuthorPage = () => {
           </Button>
         </div>
       ) : (
-        <BookGrid books={books} isLoading={isLoading} />
+        <BookGrid books={books} isLoading={isLoading} view={view} />
       )}
     </main>
   )

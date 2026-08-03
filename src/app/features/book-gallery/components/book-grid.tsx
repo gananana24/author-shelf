@@ -9,11 +9,12 @@ import {
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 
-import type { BookEdition } from '../../../../shared/book'
+import type { BookEdition, BookView } from '../../../../shared/book'
 
 type BookGridProps = {
   books: BookEdition[]
   isLoading: boolean
+  view: BookView
 }
 
 const placeholderStyles = [
@@ -26,7 +27,7 @@ const placeholderStyles = [
 ]
 
 /** 書影の有無に応じて刊行物を等幅グリッドへ配置する。 */
-const BookGrid = ({ books, isLoading }: BookGridProps) => {
+const BookGrid = ({ books, isLoading, view }: BookGridProps) => {
   const [selectedBook, setSelectedBook] = useState<BookEdition | null>(null)
 
   if (isLoading) {
@@ -39,32 +40,61 @@ const BookGrid = ({ books, isLoading }: BookGridProps) => {
     )
   }
 
+  const sections =
+    view === 'year'
+      ? Object.entries(
+          books.reduce<Record<string, BookEdition[]>>((groups, book) => {
+            const year = book.publicationDate.year?.toString() ?? '刊行年不明'
+            ;(groups[year] ??= []).push(book)
+            return groups
+          }, {}),
+        )
+      : [[null, books] as const]
+
   return (
-    <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-      {books.map((book, index) => (
-        <article className="min-w-0" key={book.id}>
-          <button
-            aria-label={`${book.title}の詳細を開く`}
-            className="group block w-full cursor-pointer rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/50 focus-visible:ring-offset-2"
-            onClick={() => setSelectedBook(book)}
-            type="button"
-          >
-            <h2 className="sr-only">{book.title}</h2>
-            {book.coverUrl ? (
-              <img
-                alt=""
-                className="aspect-2/3 w-full rounded-md object-cover transition-transform group-hover:scale-[1.02]"
-                src={book.coverUrl}
-              />
-            ) : (
-              <div
-                className={`flex aspect-2/3 items-center justify-center rounded-md p-4 text-center text-sm font-semibold leading-5 transition-transform group-hover:scale-[1.02] ${placeholderStyles[index % placeholderStyles.length]}`}
-              >
-                {book.title}
-              </div>
-            )}
-          </button>
-        </article>
+    <div className="space-y-12">
+      {sections.map(([year, sectionBooks]) => (
+        <section
+          aria-labelledby={year ? `books-year-${year}` : undefined}
+          key={year ?? 'all-books'}
+        >
+          {year && (
+            <h2
+              className="mb-5 flex items-center gap-4 text-2xl font-semibold tracking-tight text-foreground"
+              id={`books-year-${year}`}
+            >
+              <span>{year}</span>
+              <span aria-hidden="true" className="h-px flex-1 bg-border/70" />
+            </h2>
+          )}
+          <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            {sectionBooks.map((book, index) => (
+              <article className="min-w-0" key={book.id}>
+                <button
+                  aria-label={`${book.title}の詳細を開く`}
+                  className="group block w-full cursor-pointer rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/50 focus-visible:ring-offset-2"
+                  onClick={() => setSelectedBook(book)}
+                  type="button"
+                >
+                  <h3 className="sr-only">{book.title}</h3>
+                  {book.coverUrl ? (
+                    <img
+                      alt=""
+                      className="aspect-2/3 w-full rounded-md object-cover transition-transform group-hover:scale-[1.02]"
+                      src={book.coverUrl}
+                    />
+                  ) : (
+                    <div
+                      className={`flex aspect-2/3 items-center justify-center rounded-md p-4 text-center text-sm font-semibold leading-5 transition-transform group-hover:scale-[1.02] ${placeholderStyles[index % placeholderStyles.length]}`}
+                    >
+                      {book.title}
+                    </div>
+                  )}
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
       ))}
 
       <Dialog
