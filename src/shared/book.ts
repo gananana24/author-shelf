@@ -1,3 +1,6 @@
+/** 著者の刊行物を並べる方法。 */
+export type BookView = 'random' | 'year'
+
 /** 刊行日の情報がどの粒度まで判明しているかを表す。 */
 export type PublicationPrecision =
   | 'day'

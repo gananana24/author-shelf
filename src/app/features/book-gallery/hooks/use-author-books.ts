@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 
-import { apiClient } from '@/lib/api-client'
+import type { BookPage } from '../../../../api/services/book-catalog'
+import type { BookEdition, BookView } from '../../../../shared/book'
 
-import type { BookEdition } from '../../../../shared/book'
+type BooksResponse = BookPage | { error: { message: string } }
 
 /** 著者ページの書籍一覧を取得・再試行する状態を管理する。 */
-export function useAuthorBooks(authorName: string) {
+export function useAuthorBooks(authorName: string, view: BookView) {
   const [books, setBooks] = useState<BookEdition[]>([])
   const [total, setTotal] = useState(0)
   const [error, setError] = useState('')
@@ -18,10 +19,11 @@ export function useAuthorBooks(authorName: string) {
     setIsLoading(true)
 
     try {
-      const response = await apiClient.api.authors[':authorName'].books.$get({
-        param: { authorName },
-      })
-      const result = await response.json()
+      const params = new URLSearchParams({ view, seed: 'preview' })
+      const response = await fetch(
+        `/api/authors/${encodeURIComponent(authorName)}/books?${params.toString()}`,
+      )
+      const result = (await response.json()) as BooksResponse
 
       if ('error' in result) {
         setError(result.error.message)
@@ -35,7 +37,7 @@ export function useAuthorBooks(authorName: string) {
     } finally {
       setIsLoading(false)
     }
-  }, [authorName])
+  }, [authorName, view])
 
   useEffect(() => {
     void loadBooks()

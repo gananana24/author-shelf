@@ -1,4 +1,4 @@
-import type { BookEdition } from '../../shared/book.js'
+import type { BookEdition, BookView } from '../../shared/book.js'
 
 /** 著者検索で利用者へ提示する候補を表す。 */
 export type AuthorCandidate = {
@@ -7,8 +7,6 @@ export type AuthorCandidate = {
 }
 
 /** 著者の本を並べる方法を表す。 */
-export type BookView = 'random' | 'year'
-
 /** 著者別書籍一覧を取得する条件を表す。 */
 export type ListBooksInput = {
   /** 一覧を取得する著者名。 */

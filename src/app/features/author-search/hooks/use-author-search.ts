@@ -38,6 +38,7 @@ export function useAuthorSearch() {
     void navigate({
       to: '/authors/$authorName',
       params: { authorName },
+      search: { view: 'random' },
     })
   }
 
