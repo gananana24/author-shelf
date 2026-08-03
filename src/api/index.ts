@@ -1,12 +1,30 @@
+// oxlint-disable-next-line typescript/triple-slash-reference -- Wrangler's generated Env declarations are ambient.
+/// <reference path="../../worker-configuration.d.ts" />
+
 import { Hono } from 'hono'
 
-import { mockBookCatalog } from './services/mock-book-catalog.js'
+import { createRakutenBookCatalog } from './services/rakuten-book-catalog.js'
 
 const maxAuthorQueryLength = 100
 
 const normalizeQuery = (value: string) => value.normalize('NFKC').trim().replace(/\s+/g, ' ')
 
-const app = new Hono()
+const createCatalog = (env: Cloudflare.Env) => {
+  if (env.BOOK_CATALOG_SOURCE !== 'rakuten') {
+    throw new Error(`Unsupported book catalog source: ${env.BOOK_CATALOG_SOURCE}`)
+  }
+
+  return createRakutenBookCatalog(env)
+}
+
+const catalogError = (error: unknown, operation: string) => {
+  console.error('book_catalog_request_failed', {
+    operation,
+    message: error instanceof Error ? error.message : String(error),
+  })
+}
+
+const app = new Hono<{ Bindings: Cloudflare.Env }>()
   .get('/api/health', (c) => {
     return c.json({ status: 'ok' })
   })
@@ -25,9 +43,17 @@ const app = new Hono()
       )
     }
 
-    const authors = await mockBookCatalog.searchAuthors(query)
+    try {
+      const authors = await createCatalog(c.env).searchAuthors(query)
 
-    return c.json({ authors })
+      return c.json({ authors })
+    } catch (error) {
+      catalogError(error, 'search_authors')
+      return c.json(
+        { error: { code: 'catalog_unavailable', message: '書誌情報を取得できませんでした。' } },
+        502,
+      )
+    }
   })
   .get('/api/authors/:authorName/books', async (c) => {
     const authorName = normalizeQuery(c.req.param('authorName'))
@@ -83,9 +109,17 @@ const app = new Hono()
       )
     }
 
-    const page = await mockBookCatalog.listBooks({ authorName, view, cursor, seed })
+    try {
+      const page = await createCatalog(c.env).listBooks({ authorName, view, cursor, seed })
 
-    return c.json({ ...page, source: 'mock' as const })
+      return c.json({ ...page, source: 'rakuten' as const })
+    } catch (error) {
+      catalogError(error, 'list_books')
+      return c.json(
+        { error: { code: 'catalog_unavailable', message: '書誌情報を取得できませんでした。' } },
+        502,
+      )
+    }
   })
 
 export type AppType = typeof app

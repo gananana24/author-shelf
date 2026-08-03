@@ -3,7 +3,8 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.worker.tsbuildinfo",
     "types": ["@cloudflare/workers-types", "vite/client"],
-    "strict": true
+    "strict": true,
+    "moduleDetection": "auto"
   },
-  "include": ["src/api", "src/shared"]
+  "include": ["src/api", "src/shared", "worker-configuration.d.ts"]
 }

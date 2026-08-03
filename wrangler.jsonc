@@ -1,9 +1,13 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "shoka",
-  // Set this to today's date
-  "compatibility_date": "2026-08-01",
+  "compatibility_date": "2026-08-03",
+  "compatibility_flags": ["nodejs_compat"],
   "main": "./src/api/index.ts",
+  "vars": {
+    "BOOK_CATALOG_SOURCE": "rakuten",
+    "RAKUTEN_APPLICATION_URL": "https://shoka.yuto-urashima24.workers.dev",
+  },
   "assets": {
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"],
