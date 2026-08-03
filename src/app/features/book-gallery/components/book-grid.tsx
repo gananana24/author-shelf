@@ -1,3 +1,12 @@
+import { useState } from 'react'
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 
 import type { BookEdition } from '../../../../shared/book'
@@ -18,6 +27,8 @@ const placeholderStyles = [
 
 /** 書影の有無に応じて刊行物を等幅グリッドへ配置する。 */
 const BookGrid = ({ books, isLoading }: BookGridProps) => {
+  const [selectedBook, setSelectedBook] = useState<BookEdition | null>(null)
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
@@ -32,18 +43,85 @@ const BookGrid = ({ books, isLoading }: BookGridProps) => {
     <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {books.map((book, index) => (
         <article className="min-w-0" key={book.id}>
-          <h2 className="sr-only">{book.title}</h2>
-          {book.coverUrl ? (
-            <img alt="" className="aspect-2/3 w-full rounded-md object-cover" src={book.coverUrl} />
-          ) : (
-            <div
-              className={`flex aspect-2/3 items-center justify-center rounded-md p-4 text-center text-sm font-semibold leading-5 ${placeholderStyles[index % placeholderStyles.length]}`}
-            >
-              {book.title}
-            </div>
-          )}
+          <button
+            aria-label={`${book.title}の詳細を開く`}
+            className="group block w-full cursor-pointer rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/50 focus-visible:ring-offset-2"
+            onClick={() => setSelectedBook(book)}
+            type="button"
+          >
+            <h2 className="sr-only">{book.title}</h2>
+            {book.coverUrl ? (
+              <img
+                alt=""
+                className="aspect-2/3 w-full rounded-md object-cover transition-transform group-hover:scale-[1.02]"
+                src={book.coverUrl}
+              />
+            ) : (
+              <div
+                className={`flex aspect-2/3 items-center justify-center rounded-md p-4 text-center text-sm font-semibold leading-5 transition-transform group-hover:scale-[1.02] ${placeholderStyles[index % placeholderStyles.length]}`}
+              >
+                {book.title}
+              </div>
+            )}
+          </button>
         </article>
       ))}
+
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) setSelectedBook(null)
+        }}
+        open={selectedBook !== null}
+      >
+        <DialogContent className="max-w-lg">
+          {selectedBook && (
+            <>
+              <DialogHeader className="pr-8">
+                <DialogTitle>{selectedBook.title}</DialogTitle>
+                <DialogDescription>{selectedBook.authors.join('・')}</DialogDescription>
+              </DialogHeader>
+
+              <div className="grid gap-4 text-sm">
+                {selectedBook.description && (
+                  <p className="leading-6 text-muted-foreground">{selectedBook.description}</p>
+                )}
+                <dl className="grid grid-cols-[auto_1fr] gap-x-5 gap-y-2">
+                  <dt className="text-muted-foreground">刊行日</dt>
+                  <dd>{selectedBook.publicationDate.raw ?? '不明'}</dd>
+                  {selectedBook.publisher && (
+                    <>
+                      <dt className="text-muted-foreground">出版社</dt>
+                      <dd>{selectedBook.publisher}</dd>
+                    </>
+                  )}
+                  {selectedBook.format && (
+                    <>
+                      <dt className="text-muted-foreground">判型</dt>
+                      <dd>{selectedBook.format}</dd>
+                    </>
+                  )}
+                  {selectedBook.isbn && (
+                    <>
+                      <dt className="text-muted-foreground">ISBN</dt>
+                      <dd>{selectedBook.isbn}</dd>
+                    </>
+                  )}
+                </dl>
+                {selectedBook.sourceUrl && (
+                  <a
+                    className="text-sm text-emerald-700 underline-offset-4 hover:underline"
+                    href={selectedBook.sourceUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    書誌情報の出典を開く
+                  </a>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
