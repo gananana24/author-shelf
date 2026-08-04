@@ -9,10 +9,10 @@ import { useAuthorBooks } from '../hooks/use-author-books'
 /** 選択した著者の刊行物ページを表示する。 */
 const AuthorPage = () => {
   const { authorName } = useParams({ from: '/authors/$authorName' })
-  const { view } = useSearch({ from: '/authors/$authorName' })
+  const { seed, view } = useSearch({ from: '/authors/$authorName' })
   const navigate = useNavigate()
   const { books, error, isLoading, isLoadingMore, loadBooks, loadMore, nextCursor, total } =
-    useAuthorBooks(authorName, view)
+    useAuthorBooks(authorName, view, seed ?? 'preview')
   const observerRef = useRef<IntersectionObserver | null>(null)
 
   const setLoadMoreTarget = (node: HTMLDivElement | null) => {
@@ -32,7 +32,7 @@ const AuthorPage = () => {
     void navigate({
       to: '/authors/$authorName',
       params: { authorName },
-      search: { view: nextView },
+      search: { seed, view: nextView },
     })
   }
 

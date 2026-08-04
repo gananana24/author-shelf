@@ -5,10 +5,10 @@ import type { BookPage } from '../../../../api/services/book-catalog'
 import type { BookEdition, BookView } from '../../../../shared/book'
 
 type BooksResponse = BookPage | { error: { message: string } }
-const loadMoreDelayMs = 800
+const loadMoreDelayMs = 1_500
 
 /** 著者ページの書籍一覧を取得・再試行する状態を管理する。 */
-export function useAuthorBooks(authorName: string, view: BookView) {
+export function useAuthorBooks(authorName: string, view: BookView, seed: string) {
   const [books, setBooks] = useState<BookEdition[]>([])
   const [total, setTotal] = useState(0)
   const [error, setError] = useState('')
@@ -16,10 +16,12 @@ export function useAuthorBooks(authorName: string, view: BookView) {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const lastLoadMoreAtRef = useRef(0)
+  const isLoadingMoreRef = useRef(false)
+  const nextCursorRef = useRef<string | null>(null)
 
   const fetchBooks = useCallback(
     async (cursor: string | null) => {
-      const params = new URLSearchParams({ view, seed: 'preview' })
+      const params = new URLSearchParams({ view, seed })
       if (cursor) params.set('cursor', cursor)
 
       const response = await fetch(
@@ -27,7 +29,7 @@ export function useAuthorBooks(authorName: string, view: BookView) {
       )
       return (await response.json()) as BooksResponse
     },
-    [authorName, view],
+    [authorName, seed, view],
   )
 
   const loadBooks = useCallback(async () => {
@@ -36,6 +38,7 @@ export function useAuthorBooks(authorName: string, view: BookView) {
     setError('')
     setIsLoading(true)
     setNextCursor(null)
+    nextCursorRef.current = null
 
     try {
       const result = await fetchBooks(null)
@@ -48,6 +51,7 @@ export function useAuthorBooks(authorName: string, view: BookView) {
       setBooks(result.items)
       setTotal(result.total)
       setNextCursor(result.nextCursor)
+      nextCursorRef.current = result.nextCursor
     } catch {
       setError('本の情報を取得できませんでした。時間をおいてもう一度お試しください。')
     } finally {
@@ -56,8 +60,10 @@ export function useAuthorBooks(authorName: string, view: BookView) {
   }, [fetchBooks])
 
   const loadMore = async () => {
-    if (!nextCursor || isLoadingMore || isLoading) return
+    const cursor = nextCursorRef.current
+    if (!cursor || isLoadingMoreRef.current || isLoading) return
 
+    isLoadingMoreRef.current = true
     setIsLoadingMore(true)
     try {
       const elapsed = Date.now() - lastLoadMoreAtRef.current
@@ -67,7 +73,7 @@ export function useAuthorBooks(authorName: string, view: BookView) {
       }
 
       lastLoadMoreAtRef.current = Date.now()
-      const result = await fetchBooks(nextCursor)
+      const result = await fetchBooks(cursor)
 
       if ('error' in result) {
         setError(result.error.message)
@@ -76,9 +82,11 @@ export function useAuthorBooks(authorName: string, view: BookView) {
 
       setBooks((currentBooks) => [...currentBooks, ...result.items])
       setNextCursor(result.nextCursor)
+      nextCursorRef.current = result.nextCursor
     } catch {
       setError('続きの本を取得できませんでした。時間をおいてもう一度お試しください。')
     } finally {
+      isLoadingMoreRef.current = false
       setIsLoadingMore(false)
     }
   }

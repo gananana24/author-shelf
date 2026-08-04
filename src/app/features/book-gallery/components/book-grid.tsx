@@ -33,8 +33,25 @@ const BookGrid = ({ books, isLoading, isLoadingMore = false, view }: BookGridPro
   const [selectedBook, setSelectedBook] = useState<BookEdition | null>(null)
 
   if (isLoading) {
+    if (view === 'year') {
+      return (
+        <div className="space-y-12" aria-label="本を読み込み中" role="status">
+          {[0, 1, 2].map((section) => (
+            <section key={section}>
+              <Skeleton className="mb-5 h-8 w-24" />
+              <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {Array.from({ length: 6 }, (_, index) => (
+                  <Skeleton className="aspect-2/3 w-full rounded-md" key={index} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )
+    }
+
     return (
-      <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+      <div aria-label="本を読み込み中" className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" role="status">
         {Array.from({ length: 10 }, (_, index) => (
           <Skeleton className="aspect-2/3 w-full rounded-md" key={index} />
         ))}

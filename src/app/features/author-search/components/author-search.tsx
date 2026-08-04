@@ -1,6 +1,6 @@
 import { useLocation } from '@tanstack/react-router'
 import { LoaderCircle, Search } from 'lucide-react'
-import { type KeyboardEvent, type SyntheticEvent, useState } from 'react'
+import { type KeyboardEvent, type SyntheticEvent, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
@@ -26,9 +26,11 @@ const AuthorSearch = () => {
   } = useAuthorSearch()
   const isInitialState = pathname === '/'
   const [activeAuthorIndex, setActiveAuthorIndex] = useState(-1)
+  const isComposingRef = useRef(false)
 
   const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!query.trim()) return
     setActiveAuthorIndex(-1)
     void searchAuthors(query)
   }
@@ -94,9 +96,16 @@ const AuthorSearch = () => {
                 autoComplete="off"
                 className="h-11 border-0 bg-transparent px-3 shadow-none outline-none focus-visible:ring-0"
                 id="author-query"
+                onCompositionEnd={(event) => {
+                  isComposingRef.current = false
+                  setQuery(event.currentTarget.value)
+                }}
+                onCompositionStart={() => {
+                  isComposingRef.current = true
+                }}
                 onChange={(event) => {
                   setActiveAuthorIndex(-1)
-                  setQuery(event.target.value)
+                  setQuery(event.target.value, !isComposingRef.current)
                 }}
                 onKeyDown={handleQueryKeyDown}
                 placeholder="著者名で検索（例: 青空）"

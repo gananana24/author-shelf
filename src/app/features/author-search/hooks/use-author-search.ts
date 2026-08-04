@@ -3,6 +3,10 @@ import { useRef, useState } from 'react'
 
 import { apiClient } from '@/lib/api-client'
 
+const normalizeAuthorQuery = (value: string) =>
+  value.normalize('NFKC').trim().replace(/\s/g, '').toLocaleLowerCase('ja-JP')
+const createSeed = () => crypto.randomUUID()
+
 /** 著者候補の検索状態と著者ページへの遷移を管理する。 */
 export function useAuthorSearch() {
   const navigate = useNavigate()
@@ -12,9 +16,23 @@ export function useAuthorSearch() {
   const [isSearching, setIsSearching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
   const requestRef = useRef<AbortController | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const searchAuthors = async (searchQuery: string) => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+      debounceRef.current = null
+    }
+
     requestRef.current?.abort()
+
+    if (!searchQuery.trim()) {
+      setAuthors([])
+      setError('')
+      setHasSearched(false)
+      return
+    }
+
     const controller = new AbortController()
     requestRef.current = controller
     setError('')
@@ -34,7 +52,17 @@ export function useAuthorSearch() {
         return
       }
 
-      setAuthors(result.authors.map(({ name }) => name))
+      const authorNames = result.authors.map(({ name }) => name)
+      const exactAuthor = authorNames.find(
+        (name) => normalizeAuthorQuery(name) === normalizeAuthorQuery(searchQuery),
+      )
+
+      if (authorNames.length === 1 && exactAuthor) {
+        selectAuthor(exactAuthor)
+        return
+      }
+
+      setAuthors(authorNames)
     } catch (searchError) {
       if (searchError instanceof DOMException && searchError.name === 'AbortError') return
       setError('検索に失敗しました。時間をおいてもう一度お試しください。')
@@ -52,7 +80,7 @@ export function useAuthorSearch() {
     void navigate({
       to: '/authors/$authorName',
       params: { authorName },
-      search: { view: 'random' },
+      search: { seed: createSeed(), view: 'random' },
     })
   }
 
@@ -61,9 +89,20 @@ export function useAuthorSearch() {
     setHasSearched(false)
   }
 
-  const updateQuery = (value: string) => {
+  const updateQuery = (value: string, shouldSearch = true) => {
     setQuery(value)
     setHasSearched(false)
+
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!shouldSearch || !value.trim()) {
+      setAuthors([])
+      setError('')
+      return
+    }
+
+    debounceRef.current = setTimeout(() => {
+      void searchAuthors(value)
+    }, 500)
   }
 
   return {
