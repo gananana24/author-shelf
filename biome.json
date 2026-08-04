@@ -12,21 +12,44 @@
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
-    "indentWidth": 2
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "bracketSpacing": true,
+    "bracketSameLine": false
+  },
+  "javascript": {
+    "formatter": {
+      "bracketSameLine": false,
+      "quoteStyle": "double",
+      "quoteProperties": "asNeeded",
+      "semicolons": "asNeeded",
+      "trailingCommas": "all",
+      "arrowParentheses": "always"
+    }
   },
   "css": {
+    "linter": {
+      "enabled": true
+    },
     "parser": {
       "tailwindDirectives": true
     }
   },
   "linter": {
     "enabled": true,
-    "rules": {
-      "recommended": true
-    },
     "domains": {
       "next": "recommended",
       "react": "recommended"
+    },
+    "rules": {
+      "recommended": true,
+      "style": {
+        "noNonNullAssertion": "error",
+        "useImportType": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "error"
+      }
     }
   },
   "assist": {
