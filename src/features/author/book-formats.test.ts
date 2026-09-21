@@ -12,11 +12,26 @@ describe("getBookFormat", () => {
     ["全集・双書", "other"],
     ["絵本", "other"],
     [undefined, "other"],
-  ])("maps %s to %s", (size, expected) => {
-    expect(getBookFormat(size)).toBe(expected)
+  ])("楽天Booksの判型「%s」を内部区分「%s」として扱う", (size, expected) => {
+    // Arrange
+    const sut = getBookFormat
+
+    // Act
+    const actual = sut(size)
+
+    // Assert
+    expect(actual).toBe(expected)
   })
 
-  it("normalizes full-width variants before classifying", () => {
-    expect(getBookFormat("　文庫　")).toBe("paperback")
+  it("判型の全角空白を無視して文庫として扱う", () => {
+    // Arrange
+    const sut = getBookFormat
+    const size = "　文庫　"
+
+    // Act
+    const actual = sut(size)
+
+    // Assert
+    expect(actual).toBe("paperback")
   })
 })

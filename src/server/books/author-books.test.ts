@@ -13,50 +13,74 @@ afterEach(() => {
 })
 
 describe("normalizePublishedDate", () => {
-  it("keeps partial dates partial while creating a stable sort key", () => {
-    expect(normalizePublishedDate("2009.8")).toEqual({
+  it("年月だけの刊行日は日を補完せず安定したソートキーを返す", () => {
+    // Arrange
+    const sut = normalizePublishedDate
+    const publishedDate = "2009.8"
+    const expected = {
       display: "2009年8月",
       sortDate: "2009-08-99",
       year: 2009,
-    })
+    }
+
+    // Act
+    const actual = sut(publishedDate)
+
+    // Assert
+    expect(actual).toEqual(expected)
   })
 
-  it("uses the documented day equivalents for release-date qualifiers", () => {
-    expect(normalizePublishedDate("2026年9月中旬")).toEqual({
+  it("中旬の刊行日は11日相当のソートキーを返す", () => {
+    // Arrange
+    const sut = normalizePublishedDate
+    const publishedDate = "2026年9月中旬"
+    const expected = {
       display: "2026年9月中旬",
       sortDate: "2026-09-11",
       year: 2026,
-    })
+    }
+
+    // Act
+    const actual = sut(publishedDate)
+
+    // Assert
+    expect(actual).toEqual(expected)
   })
 
-  it("places unknown dates last", () => {
-    expect(normalizePublishedDate(undefined)).toEqual({
+  it("刊行日が不明な書籍は既知の日付より後ろへ並ぶソートキーを返す", () => {
+    // Arrange
+    const sut = normalizePublishedDate
+    const publishedDate = undefined
+    const expected = {
       display: undefined,
       sortDate: "9999-99-99",
       year: undefined,
-    })
+    }
+
+    // Act
+    const actual = sut(publishedDate)
+
+    // Assert
+    expect(actual).toEqual(expected)
   })
 })
 
 describe("normalizeRakutenItem", () => {
-  it("maps a Rakuten Books item to the app model", () => {
-    expect(
-      normalizeRakutenItem(
-        {
-          title: "赤い指",
-          author: "東野圭吾／山田太郎",
-          publisherName: "講談社",
-          size: "文庫",
-          isbn: "978-4-06-276444-5",
-          itemCaption: "加賀恭一郎シリーズ。",
-          salesDate: "2009年08月",
-          itemUrl: "https://books.rakuten.co.jp/example",
-          largeImageUrl: "https://thumbnail.image.rakuten.co.jp/example.jpg",
-        },
-        "東野圭吾",
-        0,
-      ),
-    ).toEqual({
+  it("楽天Booksの商品をアプリで扱う書籍情報へ変換する", () => {
+    // Arrange
+    const sut = normalizeRakutenItem
+    const item = {
+      title: "赤い指",
+      author: "東野圭吾／山田太郎",
+      publisherName: "講談社",
+      size: "文庫",
+      isbn: "978-4-06-276444-5",
+      itemCaption: "加賀恭一郎シリーズ。",
+      salesDate: "2009年08月",
+      itemUrl: "https://books.rakuten.co.jp/example",
+      largeImageUrl: "https://thumbnail.image.rakuten.co.jp/example.jpg",
+    }
+    const expected = {
       id: "9784062764445",
       title: "赤い指",
       authors: ["東野圭吾", "山田太郎"],
@@ -69,24 +93,31 @@ describe("normalizeRakutenItem", () => {
       coverUrl: "https://thumbnail.image.rakuten.co.jp/example.jpg",
       sourceUrl: "https://books.rakuten.co.jp/example",
       size: "文庫",
-    })
+    }
+
+    // Act
+    const actual = sut(item, "東野圭吾", 0)
+
+    // Assert
+    expect(actual).toEqual(expected)
   })
 
-  it("uses the designed fallback when Rakuten returns its no-image asset", () => {
-    expect(
-      normalizeRakutenItem(
-        {
-          title: "書影のない本",
-          author: "著者名",
-          salesDate: "2020年01月",
-          itemUrl: "https://books.rakuten.co.jp/example",
-          largeImageUrl:
-            "https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/noimage_01.gif",
-        },
-        "著者名",
-        0,
-      ),
-    ).not.toHaveProperty("coverUrl")
+  it("楽天Booksのnoimage画像は書影なしとして扱う", () => {
+    // Arrange
+    const sut = normalizeRakutenItem
+    const item = {
+      title: "書影のない本",
+      author: "著者名",
+      salesDate: "2020年01月",
+      itemUrl: "https://books.rakuten.co.jp/example",
+      largeImageUrl: "https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/noimage_01.gif",
+    }
+
+    // Act
+    const actual = sut(item, "著者名", 0)
+
+    // Assert
+    expect(actual).not.toHaveProperty("coverUrl")
   })
 })
 
@@ -96,17 +127,34 @@ describe("isExcludedRakutenItem", () => {
     "加賀恭一郎シリーズ 全巻セット",
     "作品集BOX",
     "【バーゲン本】パラドックス13",
-  ])("excludes non-single-book products: %s", (title) => {
-    expect(isExcludedRakutenItem({ title })).toBe(true)
+  ])("単品の書籍ではない「%s」を除外する", (title) => {
+    // Arrange
+    const sut = isExcludedRakutenItem
+
+    // Act
+    const actual = sut({ title })
+
+    // Assert
+    expect(actual).toBe(true)
   })
 
-  it("keeps a single book even when Rakuten classifies it as 全集・双書", () => {
-    expect(isExcludedRakutenItem({ title: "鳥人計画", size: "全集・双書" })).toBe(false)
+  it("全集・双書に分類された単品の書籍は表示対象にする", () => {
+    // Arrange
+    const sut = isExcludedRakutenItem
+    const item = { title: "鳥人計画", size: "全集・双書" }
+
+    // Act
+    const actual = sut(item)
+
+    // Assert
+    expect(actual).toBe(false)
   })
 })
 
 describe("fetchAuthorBooks", () => {
-  it("loads one Rakuten page and supports the Books API Items field", async () => {
+  it("楽天Booksの1ページを取得し、単品の書籍だけを次ページ情報とともに返す", async () => {
+    // Arrange
+    const sut = fetchAuthorBooks
     vi.stubEnv("RAKUTEN_APPLICATION_ID", "application-id")
     vi.stubEnv("RAKUTEN_ACCESS_KEY", "access-key")
     vi.stubEnv("RAKUTEN_APP_URL", "https://example.com/books")
@@ -137,8 +185,10 @@ describe("fetchAuthorBooks", () => {
     )
     vi.stubGlobal("fetch", fetchMock)
 
-    const result = await fetchAuthorBooks("東野圭吾", 1)
+    // Act
+    const actual = await sut("東野圭吾", 1)
 
+    // Assert
     expect(fetchMock).toHaveBeenCalledOnce()
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("page=1"),
@@ -150,7 +200,7 @@ describe("fetchAuthorBooks", () => {
         },
       }),
     )
-    expect(result).toMatchObject({
+    expect(actual).toMatchObject({
       author: "東野圭吾",
       total: 31,
       page: 1,
@@ -161,7 +211,9 @@ describe("fetchAuthorBooks", () => {
 })
 
 describe("fetchAuthorSuggestions", () => {
-  it("extracts and ranks matching author names from Rakuten books", async () => {
+  it("楽天Booksの商品から検索語に一致する著者候補を抽出して並べる", async () => {
+    // Arrange
+    const sut = fetchAuthorSuggestions
     vi.stubEnv("RAKUTEN_APPLICATION_ID", "application-id")
     vi.stubEnv("RAKUTEN_ACCESS_KEY", "access-key")
     vi.stubEnv("RAKUTEN_APP_URL", "https://example.com")
@@ -185,14 +237,16 @@ describe("fetchAuthorSuggestions", () => {
       ),
     )
 
-    await expect(fetchAuthorSuggestions("東野")).resolves.toEqual([
-      { name: "東野圭吾" },
-      { name: "東野さやか" },
-      { name: "佐藤東野" },
-    ])
+    // Act
+    const actual = await sut("東野")
+
+    // Assert
+    expect(actual).toEqual([{ name: "東野圭吾" }, { name: "東野さやか" }, { name: "佐藤東野" }])
   })
 
-  it("does not suggest a combined multi-author value", async () => {
+  it("複数名義を連結した値は著者候補に含めない", async () => {
+    // Arrange
+    const sut = fetchAuthorSuggestions
     vi.stubEnv("RAKUTEN_APPLICATION_ID", "application-id")
     vi.stubEnv("RAKUTEN_ACCESS_KEY", "access-key")
     vi.stubEnv("RAKUTEN_APP_URL", "https://example.com")
@@ -208,6 +262,10 @@ describe("fetchAuthorSuggestions", () => {
       ),
     )
 
-    await expect(fetchAuthorSuggestions("伊坂")).resolves.toEqual([])
+    // Act
+    const actual = await sut("伊坂")
+
+    // Assert
+    expect(actual).toEqual([])
   })
 })
